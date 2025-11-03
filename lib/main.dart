@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:attendanceapp/models/attendence.dart';
+import 'package:attendanceapp/models/attendence_model.dart';
 import 'package:attendanceapp/services/db_services/database_initializer.dart';
 import 'package:attendanceapp/services/db_services/attendance_service.dart';
 
@@ -8,10 +8,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize the database service
- await DatabaseInitializer.instance.initializeHive();
+  await DatabaseInitializer.instance.initializeHive();
   // Initialize the attendance service
   AttendanceService.instance.initialize();
-  
+
   runApp(const AttendanceAppWrapper());
 }
 
@@ -68,18 +68,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
- List<Attendance> _attendanceList = [];
+  List<Attendance> _attendanceList = [];
   StreamSubscription? _attendanceSubscription;
 
   @override
   void initState() {
     super.initState();
     // Subscribe to attendance stream for real-time updates
-    _attendanceSubscription = AttendanceService.instance.attendanceStream.listen((attendanceList) {
-      setState(() {
-        _attendanceList = attendanceList;
-      });
-    });
+    _attendanceSubscription = AttendanceService.instance.attendanceStream
+        .listen((attendanceList) {
+          setState(() {
+            _attendanceList = attendanceList;
+          });
+        });
   }
 
   @override
@@ -95,7 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
       type: type,
     );
 
-    final id = await AttendanceService.instance.createAttendanceWithAutoId(attendance);
+    final id = await AttendanceService.instance.createAttendanceWithAutoId(
+      attendance,
+    );
     if (id != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -113,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -134,7 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Text(
                       'Attendance Actions',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -142,7 +148,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _takeAttendance(AttendanceType.checkIn),
+                            onPressed: () =>
+                                _takeAttendance(AttendanceType.checkIn),
                             icon: const Icon(Icons.login),
                             label: const Text('Check In'),
                             style: ElevatedButton.styleFrom(
@@ -154,7 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _takeAttendance(AttendanceType.checkOut),
+                            onPressed: () =>
+                                _takeAttendance(AttendanceType.checkOut),
                             icon: const Icon(Icons.logout),
                             label: const Text('Check Out'),
                             style: ElevatedButton.styleFrom(
@@ -171,7 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _takeAttendance(AttendanceType.leave),
+                            onPressed: () =>
+                                _takeAttendance(AttendanceType.leave),
                             icon: const Icon(Icons.beach_access),
                             label: const Text('Leave'),
                             style: ElevatedButton.styleFrom(
@@ -183,7 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _takeAttendance(AttendanceType.workFromHome),
+                            onPressed: () =>
+                                _takeAttendance(AttendanceType.workFromHome),
                             icon: const Icon(Icons.home),
                             label: const Text('WFH'),
                             style: ElevatedButton.styleFrom(
@@ -198,16 +208,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Recent attendance records
             const Text(
               'Recent Attendance',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            
+
             Expanded(
               child: _attendanceList.isEmpty
                   ? const Center(
@@ -230,8 +240,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: const TextStyle(fontSize: 12),
                             ),
                             trailing: Text(
-                              '#${attendance.id.substring(0, 8)}',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              '#${attendance.id?.substring(0, 8)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         );
@@ -243,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   Icon _getTypeIcon(AttendanceType type) {
     switch (type) {
       case AttendanceType.checkIn:
@@ -256,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return const Icon(Icons.home, color: Colors.purple);
     }
   }
-  
+
   String _getTypeString(AttendanceType type) {
     switch (type) {
       case AttendanceType.checkIn:
@@ -268,5 +281,5 @@ class _HomeScreenState extends State<HomeScreen> {
       case AttendanceType.workFromHome:
         return 'Work From Home';
     }
- }
+  }
 }

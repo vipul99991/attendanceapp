@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:attendanceapp/models/attendence.dart';
+import 'package:attendanceapp/models/attendence_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:validators/validators.dart';
 import 'database_initializer.dart';
@@ -23,7 +23,7 @@ class AttendanceService {
   StreamController<List<Attendance>>? _attendanceStreamController;
 
   /// Logger for error logging
- void _logError(String message, [dynamic error, StackTrace? stackTrace]) {
+  void _logError(String message, [dynamic error, StackTrace? stackTrace]) {
     print('AttendanceService Error: $message');
     if (error != null) print('Error details: $error');
     if (stackTrace != null) print('Stack trace: $stackTrace');
@@ -32,8 +32,9 @@ class AttendanceService {
   /// Initialize attendance service and stream controllers
   void initialize() {
     // Initialize stream controllers
-    _attendanceStreamController = StreamController<List<Attendance>>.broadcast();
-    
+    _attendanceStreamController =
+        StreamController<List<Attendance>>.broadcast();
+
     // Load initial data to stream
     _broadcastAttendanceList();
   }
@@ -50,19 +51,21 @@ class AttendanceService {
   /// Convert Map to Attendance object
   Attendance? _mapToAttendance(Map<dynamic, dynamic>? map) {
     if (map == null) return null;
-    
+
     try {
       final typeString = map['type'] as String?;
       final type = _stringToAttendanceType(typeString);
-      
+
       if (type == null) {
         _logError('Invalid attendance type: $typeString');
         return null;
       }
-      
+
       return Attendance(
         id: map['id'] as String? ?? '',
-        datetime: DateTime.parse(map['datetime'] as String? ?? DateTime.now().toIso8601String()),
+        datetime: DateTime.parse(
+          map['datetime'] as String? ?? DateTime.now().toIso8601String(),
+        ),
         type: type,
       );
     } catch (e, stackTrace) {
@@ -89,7 +92,12 @@ class AttendanceService {
 
   /// Validate attendance object before storing
   bool _validateAttendance(Attendance attendance) {
-    if (attendance.id.isEmpty) {
+    if (attendance.id == null) {
+      _logError('Attendance ID cannot be null');
+      return false;
+    }
+
+    if (attendance.id?.isEmpty ?? true) {
       _logError('Attendance ID cannot be empty');
       return false;
     }
@@ -122,10 +130,10 @@ class AttendanceService {
       // Convert to map and add to box
       final attendanceMap = _attendanceToMap(attendance);
       await attendanceBox.put(attendance.id, attendanceMap);
-      
+
       // Broadcast updated list
       _broadcastAttendanceList();
-      
+
       print('Attendance created successfully: ${attendance.id}');
       return true;
     } catch (e, stackTrace) {
@@ -143,7 +151,7 @@ class AttendanceService {
         _logError('Attendance with ID $id not found');
         return null;
       }
-      
+
       final attendanceMap = attendanceBox.get(id);
       return _mapToAttendance(attendanceMap);
     } catch (e, stackTrace) {
@@ -164,7 +172,7 @@ class AttendanceService {
           attendanceList.add(attendance);
         }
       }
-      
+
       // Sort by datetime (newest first)
       attendanceList.sort((a, b) => b.datetime.compareTo(a.datetime));
       return attendanceList;
@@ -199,10 +207,10 @@ class AttendanceService {
       // Convert to map and update the record
       final attendanceMap = _attendanceToMap(updatedAttendance);
       await attendanceBox.put(id, attendanceMap);
-      
+
       // Broadcast updated list
       _broadcastAttendanceList();
-      
+
       print('Attendance updated successfully: $id');
       return true;
     } catch (e, stackTrace) {
@@ -224,10 +232,10 @@ class AttendanceService {
 
       // Delete the record
       await attendanceBox.delete(id);
-      
+
       // Broadcast updated list
       _broadcastAttendanceList();
-      
+
       print('Attendance deleted successfully: $id');
       return true;
     } catch (e, stackTrace) {
@@ -240,8 +248,10 @@ class AttendanceService {
   Future<String?> createAttendanceWithAutoId(Attendance attendance) async {
     try {
       // Generate a new ID if not provided
-      String newId = attendance.id.isEmpty ? const Uuid().v4() : attendance.id;
-      
+      String newId = attendance.id?.isEmpty ?? true
+          ? const Uuid().v4()
+          : attendance.id!;
+
       // Create a new attendance object with the new ID
       final newAttendance = Attendance(
         id: newId,
@@ -259,10 +269,10 @@ class AttendanceService {
       // Convert to map and add to box
       final attendanceMap = _attendanceToMap(newAttendance);
       await attendanceBox.put(newAttendance.id, attendanceMap);
-      
+
       // Broadcast updated list
       _broadcastAttendanceList();
-      
+
       print('Attendance created with auto-generated ID: $newId');
       return newId;
     } catch (e, stackTrace) {
@@ -292,7 +302,7 @@ class AttendanceService {
   }
 
   /// Get attendance records by type
- List<Attendance> getAttendanceByType(AttendanceType type) {
+  List<Attendance> getAttendanceByType(AttendanceType type) {
     try {
       final attendanceBox = DatabaseInitializer.instance.attendanceBox;
       final attendanceList = <Attendance>[];
@@ -303,7 +313,7 @@ class AttendanceService {
           attendanceList.add(attendance);
         }
       }
-      
+
       // Sort by datetime (newest first)
       attendanceList.sort((a, b) => b.datetime.compareTo(a.datetime));
       return attendanceList;
@@ -314,7 +324,7 @@ class AttendanceService {
   }
 
   /// Get attendance records within a date range
- List<Attendance> getAttendanceByDateRange(DateTime start, DateTime end) {
+  List<Attendance> getAttendanceByDateRange(DateTime start, DateTime end) {
     try {
       final attendanceBox = DatabaseInitializer.instance.attendanceBox;
       final attendanceList = <Attendance>[];
@@ -327,7 +337,7 @@ class AttendanceService {
           attendanceList.add(attendance);
         }
       }
-      
+
       // Sort by datetime (newest first)
       attendanceList.sort((a, b) => b.datetime.compareTo(a.datetime));
       return attendanceList;
@@ -346,10 +356,10 @@ class AttendanceService {
     try {
       final attendanceBox = DatabaseInitializer.instance.attendanceBox;
       await attendanceBox.clear();
-      
+
       // Broadcast updated list
       _broadcastAttendanceList();
-      
+
       print('All attendance records cleared successfully');
       return true;
     } catch (e, stackTrace) {
@@ -366,7 +376,7 @@ class AttendanceService {
           !_attendanceStreamController!.isClosed) {
         await _attendanceStreamController!.close();
       }
-      
+
       print('AttendanceService disposed successfully');
     } catch (e, stackTrace) {
       _logError('Failed to dispose AttendanceService', e, stackTrace);
