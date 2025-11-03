@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:attendanceapp/models/attendence_model.dart';
+import 'package:attendanceapp/models/models.dart';
 import 'package:uuid/uuid.dart';
 import 'package:validators/validators.dart';
 import 'database_initializer.dart';

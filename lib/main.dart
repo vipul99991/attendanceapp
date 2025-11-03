@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:attendanceapp/models/attendence_model.dart';
+import 'package:attendanceapp/models/models.dart';
 import 'package:attendanceapp/services/db_services/database_initializer.dart';
 import 'package:attendanceapp/services/db_services/attendance_service.dart';
 
