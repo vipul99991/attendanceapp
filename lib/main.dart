@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:attendanceapp/models/attendence.dart';
-import 'package:attendanceapp/services/db_service.dart';
+import 'package:attendanceapp/services/db_services/database_initializer.dart';
+import 'package:attendanceapp/services/db_services/attendance_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize the database service
-  await DBService.instance.initializeHive();
+ await DatabaseInitializer.instance.initializeHive();
+  // Initialize the attendance service
+  AttendanceService.instance.initialize();
   
   runApp(const AttendanceAppWrapper());
 }
@@ -45,8 +48,9 @@ class _AttendanceAppWrapperState extends State<AttendanceAppWrapper> {
 
   @override
   void dispose() {
-    // Properly dispose of the database service when the app closes
-    DBService.instance.dispose();
+    // Properly dispose of the database services when the app closes
+    DatabaseInitializer.instance.dispose();
+    AttendanceService.instance.dispose();
     super.dispose();
   }
 
@@ -71,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     // Subscribe to attendance stream for real-time updates
-    _attendanceSubscription = DBService.instance.attendanceStream.listen((attendanceList) {
+    _attendanceSubscription = AttendanceService.instance.attendanceStream.listen((attendanceList) {
       setState(() {
         _attendanceList = attendanceList;
       });
@@ -91,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       type: type,
     );
 
-    final id = await DBService.instance.createAttendanceWithAutoId(attendance);
+    final id = await AttendanceService.instance.createAttendanceWithAutoId(attendance);
     if (id != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
