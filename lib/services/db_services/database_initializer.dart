@@ -17,19 +17,23 @@ class DatabaseInitializer {
 
   /// Hive box names
   static const String attendanceBoxName = 'attendance_box';
+  static const String leaveBoxName = 'leave_box';
   static const String settingsBoxName = 'settings_box';
 
   /// Hive boxes
   Box<Map>? _attendanceBox;
-  Box? _settingsBox;
+  Box<Map>? _leaveBox;
+  Box<Map>? _settingsBox;
 
- /// Stream controllers for reactive state management
+  /// Stream controllers for reactive state management
   StreamController<Map<String, dynamic>>? _settingsStreamController;
 
   /// Check if database is initialized
   bool get isInitialized =>
       _attendanceBox != null &&
       _attendanceBox!.isOpen &&
+      _leaveBox != null &&
+      _leaveBox!.isOpen &&
       _settingsBox != null &&
       _settingsBox!.isOpen;
 
@@ -58,20 +62,22 @@ class DatabaseInitializer {
       _logError('Failed to initialize Hive database', e, stackTrace);
       rethrow;
     }
- }
+  }
 
   /// Open Hive boxes
   Future<void> _openBoxes() async {
     try {
       _attendanceBox = await Hive.openBox<Map>(attendanceBoxName);
+      _leaveBox = await Hive.openBox<Map>(leaveBoxName);
       _settingsBox = await Hive.openBox<Map>(settingsBoxName);
-      
+
       // Initialize stream controllers
-      _settingsStreamController = StreamController<Map<String, dynamic>>.broadcast();
-      
+      _settingsStreamController =
+          StreamController<Map<String, dynamic>>.broadcast();
+
       // Load initial data to stream
       _broadcastSettings();
-      
+
       print('Hive boxes opened successfully');
     } catch (e, stackTrace) {
       _logError('Failed to open Hive boxes', e, stackTrace);
@@ -80,15 +86,22 @@ class DatabaseInitializer {
   }
 
   /// Get attendance box
- Box<Map> get attendanceBox {
+  Box<Map> get attendanceBox {
     if (_attendanceBox == null || _attendanceBox!.isOpen == false) {
       throw StateError('Attendance box is not initialized or closed');
     }
     return _attendanceBox!;
   }
 
+  Box<Map> get leaveBox {
+    if (_leaveBox == null || _leaveBox!.isOpen == false) {
+      throw StateError('Leave box is not initialized or closed');
+    }
+    return _leaveBox!;
+  }
+
   /// Get settings box
- Box get settingsBox {
+  Box get settingsBox {
     if (_settingsBox == null || _settingsBox!.isOpen == false) {
       throw StateError('Settings box is not initialized or closed');
     }
@@ -100,6 +113,9 @@ class DatabaseInitializer {
     try {
       if (_attendanceBox != null && _attendanceBox!.isOpen) {
         await _attendanceBox!.close();
+      }
+      if (_leaveBox != null && _leaveBox!.isOpen) {
+        await _leaveBox!.close();
       }
       if (_settingsBox != null && _settingsBox!.isOpen) {
         await _settingsBox!.close();
@@ -115,13 +131,13 @@ class DatabaseInitializer {
     try {
       // Close all boxes
       await closeBoxes();
-      
+
       // Close stream controllers
       if (_settingsStreamController != null &&
           !_settingsStreamController!.isClosed) {
         await _settingsStreamController!.close();
       }
-      
+
       print('DatabaseInitializer disposed successfully');
     } catch (e, stackTrace) {
       _logError('Failed to dispose DatabaseInitializer', e, stackTrace);
@@ -134,14 +150,14 @@ class DatabaseInitializer {
       // Migration logic would go here
       // For example, checking the current schema version and applying updates
       final currentVersion = getSetting('db_version', defaultValue: 1);
-      
+
       if (currentVersion < 2) {
         // Perform migration from version 1 to 2
         // This is just an example - adjust according to your needs
         await setSetting('db_version', 2);
         print('Database migrated to version 2');
       }
-      
+
       // Add more migration steps as needed
     } catch (e, stackTrace) {
       _logError('Failed to perform database migration', e, stackTrace);
@@ -163,10 +179,10 @@ class DatabaseInitializer {
   Future<bool> setSetting(String key, dynamic value) async {
     try {
       await settingsBox.put(key, value);
-      
+
       // Broadcast updated settings
       _broadcastSettings();
-      
+
       print('Setting $key updated successfully');
       return true;
     } catch (e, stackTrace) {

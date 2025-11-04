@@ -90,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _takeAttendance(AttendanceType type) async {
+    if (!mounted) return;
+
     final attendance = Attendance(
       id: '', // Will be auto-generated
       datetime: DateTime.now(),
