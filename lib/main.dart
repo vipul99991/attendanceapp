@@ -90,7 +90,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _takeAttendance(AttendanceType type) async {
-    if (!mounted) return;
+    if (type == AttendanceType.checkIn){
+
+      
+
+    }
 
     final attendance = Attendance(
       id: '', // Will be auto-generated

@@ -8,7 +8,6 @@ import 'database_initializer.dart';
 class LeaveService {
   static LeaveService? _instance;
   static final _lock = Object();
-
   static LeaveService get instance {
     _instance ??= LeaveService._internal();
     return _instance!;
@@ -30,32 +29,14 @@ class LeaveService {
   }
 
   Map<String, dynamic> _leaveToMap(Leave leave) {
-    return {
-      'id': leave.id,
-      'appliedOn': leave.appliedOn.toIso8601String(),
-      'type': leave.type.toString().split('.').last, // Store as string
-    };
+    return leave.toJson();
   }
 
   Leave? _mapToLeave(Map<dynamic, dynamic>? map) {
     if (map == null) return null;
 
     try {
-      final typeString = map['type'] as String?;
-      final type = _stringToLeaveType(typeString);
-
-      if (type == null) {
-        _logError('Invalid leave type: $typeString');
-        return null;
-      }
-
-      return Leave(
-        id: map['id'] as String? ?? '',
-        appliedOn: DateTime.parse(
-          map['appliedOn'] as String? ?? DateTime.now().toIso8601String(),
-        ),
-        type: type,
-      );
+      return Leave.fromJson(map.cast<String, dynamic>());
     } catch (e, stackTrace) {
       _logError('Failed to convert map to Leave object', e, stackTrace);
       return null;
@@ -177,14 +158,11 @@ class LeaveService {
         _logError('ID in updated leave does not match the provided ID');
         return false;
       }
-
       // Convert to map and update the record
       final leaveMap = _leaveToMap(updatedLeave);
       await leaveBox.put(id, leaveMap);
-
       // Broadcast updated list
       _broadcastLeaveList();
-
       print('Leave updated successfully: $id');
       return true;
     } catch (e, stackTrace) {
@@ -197,19 +175,16 @@ class LeaveService {
   Future<bool> deleteLeave(String id) async {
     try {
       final leaveBox = DatabaseInitializer.instance.leaveBox;
-
       // Check if leave exists
       if (!leaveBox.containsKey(id)) {
         _logError('Leave with ID $id does not exist');
         return false;
       }
-
       // Delete the record
       await leaveBox.delete(id);
 
       // Broadcast updated list
       _broadcastLeaveList();
-
       print('Leave deleted successfully: $id');
       return true;
     } catch (e, stackTrace) {
@@ -225,26 +200,18 @@ class LeaveService {
       String newId = leave.id?.isEmpty ?? true ? const Uuid().v4() : leave.id!;
 
       // Create a new leave object with the new ID
-      final newLeave = Leave(
-        id: newId,
-        appliedOn: leave.appliedOn,
-        type: leave.type,
-      );
+      final newLeave = leave.copyWith(id: newId);
 
       // Validate the leave object
       if (!_validateLeave(newLeave)) {
         return null;
       }
-
       final leaveBox = DatabaseInitializer.instance.leaveBox;
-
       // Convert to map and add to box
       final leaveMap = _leaveToMap(newLeave);
       await leaveBox.put(newLeave.id, leaveMap);
-
       // Broadcast updated list
       _broadcastLeaveList();
-
       print('Leave created with auto-generated ID: $newId');
       return newId;
     } catch (e, stackTrace) {
@@ -254,12 +221,7 @@ class LeaveService {
   }
 
   /// Stream of all leave records
-  Stream<List<Leave>> get leaveStream {
-    if (_leaveStreamController == null) {
-      throw StateError('LeaveService not initialized');
-    }
-    return _leaveStreamController!.stream;
-  }
+  Stream<List<Leave>> get stream => _leaveStreamController!.stream;
 
   /// Broadcast updated leave list to stream
   void _broadcastLeaveList() {
@@ -280,7 +242,6 @@ class LeaveService {
           leaveList.add(leave);
         }
       }
-
       // Sort by appliedOn (newest first)
       leaveList.sort((a, b) => b.appliedOn.compareTo(a.appliedOn));
       return leaveList;
@@ -304,7 +265,6 @@ class LeaveService {
           leaveList.add(leave);
         }
       }
-
       // Sort by appliedOn (newest first)
       leaveList.sort((a, b) => b.appliedOn.compareTo(a.appliedOn));
       return leaveList;
@@ -322,7 +282,6 @@ class LeaveService {
 
       // Broadcast updated list
       _broadcastLeaveList();
-
       print('All leave records cleared successfully');
       return true;
     } catch (e, stackTrace) {

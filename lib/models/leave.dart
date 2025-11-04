@@ -59,11 +59,19 @@ class Leave {
       type: LeaveType.fromJson(json['type']),
       remark: json['remark'],
       approvedby: json['approvedby'],
-      approvedon: json['approvedon'] != null ? DateTime.parse(json['approvedon']) : null,
-      leavestatus: json['leavestatus'] != null ? LeaveStatusExtension.fromJson(json['leavestatus']) : null,
+      approvedon: json['approvedon'] != null
+          ? DateTime.parse(json['approvedon'])
+          : null,
+      leavestatus: json['leavestatus'] != null
+          ? LeaveStatusExtension.fromJson(json['leavestatus'])
+          : null,
       appliedOn: DateTime.parse(json['appliedOn']),
-      status: json['status'] != null ? UploadStatusExtension.fromJson(json['status']) : null,
-      uploadeddatetime: json['uploadeddatetime'] != null ? DateTime.parse(json['uploadeddatetime']) : null,
+      status: json['status'] != null
+          ? UploadStatusExtension.fromJson(json['status'])
+          : null,
+      uploadeddatetime: json['uploadeddatetime'] != null
+          ? DateTime.parse(json['uploadeddatetime'])
+          : null,
       deviceid: json['deviceid'],
     );
   }
@@ -72,7 +80,8 @@ class Leave {
   String toJsonString() => jsonEncode(toJson());
 
   // Create from JSON string
-  static Leave fromJsonString(String jsonString) => fromJson(jsonDecode(jsonString));
+  static Leave fromJsonString(String jsonString) =>
+      fromJson(jsonDecode(jsonString));
 
   // Copy with method for immutability
   Leave copyWith({
