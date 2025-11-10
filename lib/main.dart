@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:attendanceapp/services/db_services/leave_service.dart';
 import 'package:flutter/material.dart';
 import 'package:attendanceapp/models/models.dart';
 import 'package:attendanceapp/services/db_services/database_initializer.dart';
@@ -90,10 +91,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _takeAttendance(AttendanceType type) async {
-    if (type == AttendanceType.checkIn){
+    if (type == AttendanceType.checkIn) {
+      DateTime now = DateTime.now();
+
+      final leaves = LeaveService.instance.getLeaveByDateRange(now, now);
+      if (leaves.isNotEmpty) {
+        for (Leave leave in leaves) {
+          if (leave.status == LeaveStatus.approved) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cannot check in on leave day'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+        }
+      }
+
 
       
-
     }
 
     final attendance = Attendance(

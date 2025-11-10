@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/screens/new_clock_in_screen.dart';
+import 'package:attendanceapp/screens/new_clock_in_screen.dart';
 
 void main() {
   group('NewClockInScreen Tests', () {
